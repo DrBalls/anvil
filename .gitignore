@@ -10,7 +10,6 @@ client/dist/
 .env
 .env.local
 config.local.json
-CLAUDE.md
 
 # Runtime files
 *.log
