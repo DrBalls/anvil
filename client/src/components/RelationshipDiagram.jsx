@@ -72,7 +72,7 @@ graph TB
 
     // Add capabilities
     const capabilityNodes = capabilities.map((cap) => {
-      const capId = cap.id || cap.name.replace(/[^a-zA-Z0-9]/g, '')
+      const capId = (cap.id || cap.name).replace(/[^a-zA-Z0-9_]/g, '_').replace(/^[^a-zA-Z]/, 'C_') || 'UnknownCap'
       const title = cap.title || cap.name
       const system = cap.system ? `${cap.system}` : ''
       const component = cap.component ? ` | ${cap.component}` : ''
@@ -87,7 +87,7 @@ graph TB
 
     // Add enablers grouped by capability
     const enablerNodes = enablers.map((enabler) => {
-      const enId = enabler.id || enabler.name.replace(/[^a-zA-Z0-9]/g, '')
+      const enId = (enabler.id || enabler.name).replace(/[^a-zA-Z0-9_]/g, '_').replace(/^[^a-zA-Z]/, 'E_') || 'UnknownEnabler'
       const title = enabler.title || enabler.name
       const label = `⚙️ ${title}<br/>Status: ${enabler.status || 'Draft'}`
       return {
@@ -178,8 +178,8 @@ graph TB
     classDef dependency stroke:#38b2ac,stroke-width:2px,stroke-dasharray:8 4
     classDef system fill:#f0fff4,stroke:#38a169,stroke-width:2px,color:#2f855a,font-weight:bold
 
-    class ${capabilityNodes.map(c => c.id).join(',')} capability
-    class ${enablerNodes.map(e => e.id).join(',')} enabler
+    ${capabilityNodes.filter(c => c.id && c.id.trim()).length > 0 ? `class ${capabilityNodes.filter(c => c.id && c.id.trim()).map(c => c.id).join(',')} capability` : ''}
+    ${enablerNodes.filter(e => e.id && e.id.trim()).length > 0 ? `class ${enablerNodes.filter(e => e.id && e.id.trim()).map(e => e.id).join(',')} enabler` : ''}
 `
 
     return diagram

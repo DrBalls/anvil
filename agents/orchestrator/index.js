@@ -345,6 +345,46 @@ class AgentOrchestrator extends EventEmitter {
     }
     return false;
   }
+
+  /**
+   * Create document with capability context awareness
+   * This method helps agents create enablers in the same folder as their parent capability
+   */
+  async createDocumentWithContext(type, documentData, capabilityContext = null) {
+    try {
+      const axios = require('axios');
+      const baseURL = 'http://localhost:3000'; // Default Anvil server
+
+      let context = {};
+
+      // If creating an enabler and we have capability context, use it
+      if (type === 'enabler' && capabilityContext) {
+        if (typeof capabilityContext === 'string') {
+          // If it's a capability ID, let the backend find the path
+          documentData.capabilityId = capabilityContext;
+        } else if (capabilityContext.path) {
+          // If it's a capability object with path, use it directly
+          context.parentCapabilityPath = capabilityContext.path;
+        } else if (capabilityContext.id) {
+          // If it's a capability object with ID, let the backend find it
+          documentData.capabilityId = capabilityContext.id;
+        }
+      }
+
+      const response = await axios.post(`${baseURL}/api/discovery/create`, {
+        type,
+        documentData,
+        context
+      });
+
+      console.log(`[AGENT] Created ${type} document:`, response.data.fileName);
+      return response.data;
+
+    } catch (error) {
+      console.error(`[AGENT] Failed to create ${type} document:`, error.message);
+      throw error;
+    }
+  }
 }
 
 // Create singleton instance

@@ -32,6 +32,28 @@
   color: #2c3e50;
 }
 
+/* Agent Notice */
+.agent-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  color: #856404;
+}
+
+.agent-notice-text {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.agent-notice-text strong {
+  font-weight: 600;
+}
+
 /* Tabs */
 .dashboard-tabs {
   display: flex;

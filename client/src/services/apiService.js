@@ -219,13 +219,14 @@ export const apiService = {
     }
   },
 
-  async createFromDiscovery(type, documentData) {
+  async createFromDiscovery(type, documentData, context = {}) {
     try {
       if (!type || !documentData) throw new Error('Type and document data are required')
 
       const response = await api.post('/discovery/create', {
         type,
-        documentData
+        documentData,
+        context
       })
       return response.data
     } catch (error) {

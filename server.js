@@ -478,6 +478,114 @@ function extractSystem(content) {
   return match ? match[1].trim() : null;
 }
 
+// ID Generation Functions (Server-side)
+// Replicates client-side logic for generating unique IDs
+
+/**
+ * Generates a semi-unique 6-digit number based on current timestamp and random component
+ * @returns {string} A 6-digit number string
+ */
+function generateSemiUniqueNumber() {
+  // Use current timestamp (last 4 digits) + 2-digit random number
+  const now = Date.now();
+  const timeComponent = parseInt(now.toString().slice(-4));
+  const randomComponent = Math.floor(Math.random() * 100);
+
+  // Combine and ensure it's 6 digits
+  const combined = timeComponent * 100 + randomComponent;
+
+  // Ensure it's exactly 6 digits by padding or truncating
+  return combined.toString().padStart(6, '0').slice(-6);
+}
+
+/**
+ * Scans all project files to get existing IDs
+ * @param {string} prefix - The ID prefix to search for ('CAP-' or 'ENB-')
+ * @returns {Promise<string[]>} Array of existing IDs
+ */
+async function scanExistingIds(prefix) {
+  try {
+    const configPaths = getConfigPaths(config);
+    const allItems = await scanProjectPaths(configPaths.projectPaths);
+
+    const existingIds = [];
+    for (const item of allItems) {
+      if (item.metadata && item.metadata.id && item.metadata.id.startsWith(prefix)) {
+        existingIds.push(item.metadata.id);
+      }
+    }
+
+    return existingIds;
+  } catch (error) {
+    console.error(`[ID-SCAN] Error scanning existing ${prefix} IDs:`, error);
+    return [];
+  }
+}
+
+/**
+ * Generates a unique capability ID
+ * @returns {Promise<string>} New capability ID in format CAP-123456
+ */
+async function generateCapabilityId() {
+  const existingIds = await scanExistingIds('CAP-');
+  let attempts = 0;
+  const maxAttempts = 100;
+
+  while (attempts < maxAttempts) {
+    const newNumber = generateSemiUniqueNumber();
+    const newId = `CAP-${newNumber}`;
+
+    if (!existingIds.includes(newId)) {
+      return newId;
+    }
+
+    attempts++;
+    // Small delay to ensure different timestamp
+    const start = Date.now();
+    while (Date.now() - start < 1) { /* wait */ }
+  }
+
+  // Fallback to sequential numbering if semi-unique generation fails
+  let sequentialNum = 100000;
+  while (existingIds.includes(`CAP-${sequentialNum}`)) {
+    sequentialNum++;
+  }
+
+  return `CAP-${sequentialNum}`;
+}
+
+/**
+ * Generates a unique enabler ID
+ * @returns {Promise<string>} New enabler ID in format ENB-123456
+ */
+async function generateEnablerId() {
+  const existingIds = await scanExistingIds('ENB-');
+  let attempts = 0;
+  const maxAttempts = 100;
+
+  while (attempts < maxAttempts) {
+    const newNumber = generateSemiUniqueNumber();
+    const newId = `ENB-${newNumber}`;
+
+    if (!existingIds.includes(newId)) {
+      return newId;
+    }
+
+    attempts++;
+    // Small delay to ensure different timestamp
+    const start = Date.now();
+    while (Date.now() - start < 1) { /* wait */ }
+  }
+
+  // Fallback to sequential numbering if semi-unique generation fails
+  let sequentialNum = 100000;
+  while (existingIds.includes(`ENB-${sequentialNum}`)) {
+    sequentialNum++;
+  }
+
+  return `ENB-${sequentialNum}`;
+}
+
 function extractComponent(content) {
   const match = content.match(/^-\s*\*\*Component\*\*:\s*(.+)$/m);
   return match ? match[1].trim() : null;
@@ -1539,7 +1647,9 @@ app.post('/api/enabler-with-reparenting/*', async (req, res) => {
 async function createEnablerFile(enabler, capabilityId) {
   try {
     // Use ID for filename to ensure uniqueness
-    const enablerFileName = enabler.id ? `${enabler.id.toLowerCase()}-enabler.md` : `${enabler.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}-enabler.md`;
+    const enablerFileName = enabler.id ?
+      `${enabler.id.replace(/^(CAP|ENB)-/i, '')}-enabler.md` :
+      `${enabler.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}-enabler.md`;
 
     // Try to find capability directory first
     let enablerPath;
@@ -2068,15 +2178,15 @@ app.post('/api/discovery/analyze', async (req, res) => {
 // Discovery API - Create documents from analysis results
 app.post('/api/discovery/create', async (req, res) => {
   try {
-    const { type, documentData } = req.body;
+    const { type, documentData, context = {} } = req.body;
 
     if (!type || !documentData) {
       return res.status(400).json({ error: 'Type and document data are required' });
     }
 
-    console.log('[DISCOVERY] Creating document:', type, documentData.name);
+    console.log('[DISCOVERY] Creating document:', type, documentData.name, 'with context:', context);
 
-    const result = await createDocumentFromDiscovery(type, documentData);
+    const result = await createDocumentFromDiscovery(type, documentData, context);
 
     res.json(result);
   } catch (error) {
@@ -2645,8 +2755,8 @@ async function analyzeTextForDiscovery(inputText) {
     console.log('[DISCOVERY] Starting analysis of input text');
 
     // Extract key information patterns
-    const capabilities = extractCapabilities(inputText);
-    const enablers = extractEnablers(inputText);
+    const capabilities = await extractCapabilities(inputText);
+    const enablers = await extractEnablers(inputText);
     const summary = generateAnalysisSummary(inputText, capabilities, enablers);
 
     return {
@@ -2661,7 +2771,7 @@ async function analyzeTextForDiscovery(inputText) {
   }
 }
 
-function extractCapabilities(text) {
+async function extractCapabilities(text) {
   const capabilities = [];
 
   // Look for high-level features, systems, or major functionality
@@ -2672,12 +2782,13 @@ function extractCapabilities(text) {
     /(?:main|primary|core)\s+(?:feature|functionality|system):\s*(.+?)(?:\n|$)/gi
   ];
 
-  capabilityPatterns.forEach((pattern, index) => {
+  for (let patternIndex = 0; patternIndex < capabilityPatterns.length; patternIndex++) {
+    const pattern = capabilityPatterns[patternIndex];
     let match;
     while ((match = pattern.exec(text)) !== null) {
       const name = match[1].trim();
       if (name && name.length > 3 && name.length < 100) {
-        const id = generateCapabilityId();
+        const id = await generateCapabilityId();
         capabilities.push({
           id,
           name: capitalizeFirst(name),
@@ -2686,14 +2797,14 @@ function extractCapabilities(text) {
         });
       }
     }
-  });
+  }
 
   // If no patterns found, create a default capability from the title or first line
   if (capabilities.length === 0) {
     const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
     if (firstLine) {
       capabilities.push({
-        id: generateCapabilityId(),
+        id: await generateCapabilityId(),
         name: capitalizeFirst(firstLine),
         description: 'Auto-generated capability from discovery analysis',
         enablers: []
@@ -2704,7 +2815,7 @@ function extractCapabilities(text) {
   return capabilities.slice(0, 5); // Limit to 5 capabilities
 }
 
-function extractEnablers(text) {
+async function extractEnablers(text) {
   const enablers = [];
 
   // Look for specific features, components, or implementation details
@@ -2717,12 +2828,13 @@ function extractEnablers(text) {
     /(?:implement|create|build|add)\s+(.+?)(?:\s+(?:feature|component|functionality))/gi
   ];
 
-  enablerPatterns.forEach(pattern => {
+  for (let patternIndex = 0; patternIndex < enablerPatterns.length; patternIndex++) {
+    const pattern = enablerPatterns[patternIndex];
     let match;
     while ((match = pattern.exec(text)) !== null) {
       const name = match[1].trim();
       if (name && name.length > 3 && name.length < 100 && !isGenericTerm(name)) {
-        const id = generateEnablerId();
+        const id = await generateEnablerId();
         enablers.push({
           id,
           name: capitalizeFirst(name),
@@ -2731,7 +2843,7 @@ function extractEnablers(text) {
         });
       }
     }
-  });
+  }
 
   return [...new Map(enablers.map(e => [e.name.toLowerCase(), e])).values()].slice(0, 10); // Remove duplicates, limit to 10
 }
@@ -2786,25 +2898,84 @@ function capitalizeFirst(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-async function createDocumentFromDiscovery(type, documentData) {
+async function findCapabilityById(capabilityId) {
   try {
     const configPaths = getConfigPaths(config);
-    const firstProjectPath = path.resolve(configPaths.projectPaths[0]);
+
+    for (const projectPath of configPaths.projectPaths) {
+      const resolvedPath = path.resolve(projectPath);
+
+      if (await fs.pathExists(resolvedPath)) {
+        const files = await fs.readdir(resolvedPath);
+
+        for (const file of files) {
+          if (file.endsWith('-capability.md')) {
+            const filePath = path.join(resolvedPath, file);
+            const content = await fs.readFile(filePath, 'utf8');
+            const metadata = extractMetadata(content);
+
+            if (metadata.id === capabilityId) {
+              return {
+                id: metadata.id,
+                name: metadata.name,
+                path: filePath,
+                metadata
+              };
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[DISCOVERY] Error finding capability by ID:', error);
+    return null;
+  }
+}
+
+async function createDocumentFromDiscovery(type, documentData, context = {}) {
+  try {
+    let targetDirectory;
+
+    // For enablers, try to use the same directory as the parent capability
+    if (type === 'enabler' && context.parentCapabilityPath) {
+      targetDirectory = path.dirname(context.parentCapabilityPath);
+      console.log('[DISCOVERY] Using capability directory for enabler:', targetDirectory);
+    } else if (type === 'enabler' && documentData.capabilityId) {
+      // Try to find the capability by ID to get its directory
+      const capability = await findCapabilityById(documentData.capabilityId);
+      if (capability && capability.path) {
+        targetDirectory = path.dirname(capability.path);
+        console.log('[DISCOVERY] Found capability directory by ID:', targetDirectory);
+      }
+    }
+
+    // Fallback to default project path
+    if (!targetDirectory) {
+      const configPaths = getConfigPaths(config);
+      targetDirectory = path.resolve(configPaths.projectPaths[0]);
+      console.log('[DISCOVERY] Using default project path:', targetDirectory);
+    }
 
     let fileName;
     let content;
 
     if (type === 'capability') {
-      fileName = `${documentData.id.toLowerCase()}-capability.md`;
+      // Remove prefix from ID (CAP- or ENB-) to get just the number
+      const numericId = documentData.id.replace(/^(CAP|ENB)-/i, '');
+      fileName = `${numericId}-capability.md`;
       content = await generateCapabilityContentFromDiscovery(documentData);
     } else if (type === 'enabler') {
-      fileName = `${documentData.id.toLowerCase()}-enabler.md`;
+      // Remove prefix from ID (CAP- or ENB-) to get just the number
+      const numericId = documentData.id.replace(/^(CAP|ENB)-/i, '');
+      fileName = `${numericId}-enabler.md`;
       content = await generateEnablerContentFromDiscovery(documentData);
     } else {
       throw new Error('Invalid document type');
     }
 
-    const filePath = path.join(firstProjectPath, fileName);
+    const filePath = path.join(targetDirectory, fileName);
 
     // Check if file already exists
     if (await fs.pathExists(filePath)) {
