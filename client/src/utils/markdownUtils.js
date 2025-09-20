@@ -153,9 +153,69 @@ export function convertFormToMarkdown(formData, type) {
     markdown += `**External Upstream Dependencies**: ${formData.externalUpstream || 'None identified.'}\n\n`
     markdown += `**External Downstream Impact**: ${formData.externalDownstream || 'None identified.'}\n\n`
 
-    // Technical Specifications (preserved from template)
-    if (formData.technicalSpecifications) {
+    // Technical Specifications logic - preserve existing, only add for completely new documents
+    if (formData.technicalSpecifications && formData.technicalSpecifications.trim().length > 0) {
+      // Always preserve existing content exactly as is (no modifications)
       markdown += formData.technicalSpecifications.trim() + `\n\n`
+    } else {
+      // Only add template for completely new capabilities (no existing technical specifications)
+      markdown += `## Technical Specifications (Template)\n\n`
+      markdown += `### Capability Dependency Flow Diagram\n`
+      markdown += `> **Note for AI**: When designing this section, show the direct relationships and dependencies between capabilities (NOT enablers). Focus on capability-to-capability interactions, business value flows, and how capabilities work together to deliver end-to-end business outcomes. Include:\n`
+      markdown += `> - **Current Capability**: The capability being defined and its role in the business value chain\n`
+      markdown += `> - **Internal Dependencies**: Dependencies on other capabilities within the same organizational boundary/domain\n`
+      markdown += `> - **External Dependencies**: Dependencies on capabilities across organizational boundaries.\n`
+      markdown += `> - **Business Flow**: How business value and data flows between capabilities\n`
+      markdown += `> - **Exclude**: Enabler-level details, technical implementation specifics, infrastructure components\n\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `flowchart TD\n`
+      markdown += `    %% Current Capability\n`
+      markdown += `    CURRENT["Current Capability<br/>Primary Business Function<br/>🎯"]\n`
+      markdown += `    \n`
+      markdown += `    %% Internal Capabilities (Same Organization)\n`
+      markdown += `    INT1["Supporting Capability A<br/>Core Service<br/>⚙️"]\n`
+      markdown += `    INT2["Supporting Capability B<br/>Data Management<br/>📊"]\n`
+      markdown += `    INT3["Supporting Capability C<br/>Business Logic<br/>🔧"]\n`
+      markdown += `    \n`
+      markdown += `    %% External Capabilities (Different Organization)\n`
+      markdown += `    EXT1["External Capability A<br/>Third-party Service<br/>🌐"]\n`
+      markdown += `    EXT2["External Capability B<br/>Integration Point<br/>🔗"]\n`
+      markdown += `    \n`
+      markdown += `    %% Internal Dependencies Flow\n`
+      markdown += `    INT1 --> CURRENT\n`
+      markdown += `    CURRENT --> INT2\n`
+      markdown += `    INT2 --> INT3\n`
+      markdown += `    \n`
+      markdown += `    %% External Dependencies Flow\n`
+      markdown += `    EXT1 --> CURRENT\n`
+      markdown += `    CURRENT --> EXT2\n`
+      markdown += `    \n`
+      markdown += `    %% Styling\n`
+      markdown += `    classDef current fill:#e3f2fd,stroke:#1976d2,stroke-width:3px\n`
+      markdown += `    classDef internal fill:#e8f5e8,stroke:#388e3c,stroke-width:2px\n`
+      markdown += `    classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px\n`
+      markdown += `    \n`
+      markdown += `    class CURRENT current\n`
+      markdown += `    class INT1,INT2,INT3 internal\n`
+      markdown += `    class EXT1,EXT2 external\n`
+      markdown += `    \n`
+      markdown += `    %% Capability Grouping\n`
+      markdown += `    subgraph ORG1 ["Internal Organization"]\n`
+      markdown += `        subgraph DOMAIN1 ["Current Domain"]\n`
+      markdown += `            CURRENT\n`
+      markdown += `        end\n`
+      markdown += `        subgraph DOMAIN2 ["Supporting Domain"]\n`
+      markdown += `            INT1\n`
+      markdown += `            INT2\n`
+      markdown += `            INT3\n`
+      markdown += `        end\n`
+      markdown += `    end\n`
+      markdown += `    \n`
+      markdown += `    subgraph ORG2 ["External Organization"]\n`
+      markdown += `        EXT1\n`
+      markdown += `        EXT2\n`
+      markdown += `    end\n`
+      markdown += `\`\`\`\n\n`
     }
 
     // Development Plan (preserved from template)
@@ -198,10 +258,78 @@ export function convertFormToMarkdown(formData, type) {
       markdown += `| | | | | | | |\n`
     }
     markdown += `\n`
-    
-    // Technical Specifications (preserved from template)
-    if (formData.technicalSpecifications) {
+
+    // Technical Specifications logic - preserve existing, only add for completely new documents
+    if (formData.technicalSpecifications && formData.technicalSpecifications.trim().length > 0) {
+      // Always preserve existing content exactly as is (no modifications)
       markdown += formData.technicalSpecifications.trim() + `\n\n`
+    } else {
+      // Only add template for completely new enablers (no existing technical specifications)
+      markdown += `## Technical Specifications (Template)\n\n`
+      markdown += `### Enabler Dependency Flow Diagram\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `flowchart TD\n`
+      markdown += `    ENB_ID["ENB-ID<br/>Enabler Name<br/>📡"]\n`
+      markdown += `    \n`
+      markdown += `    %% Add your dependency flows here\n`
+      markdown += `    \n`
+      markdown += `    classDef enabler fill:#e3f2fd,stroke:#1976d2,stroke-width:2px\n`
+      markdown += `    class ENB_ID enabler\n`
+      markdown += `\`\`\`\n\n`
+      markdown += `### API Technical Specifications (if applicable)\n\n`
+      markdown += `| API Type | Operation | Channel / Endpoint | Description | Request / Publish Payload | Response / Subscribe Data |\n`
+      markdown += `|----------|-----------|---------------------|-------------|----------------------------|----------------------------|\n`
+      markdown += `| | | | | | |\n\n`
+      markdown += `### Data Models\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `erDiagram\n`
+      markdown += `    Entity {\n`
+      markdown += `        string id PK\n`
+      markdown += `        string name\n`
+      markdown += `        string description\n`
+      markdown += `    }\n`
+      markdown += `    \n`
+      markdown += `    %% Add relationships and more entities here\n`
+      markdown += `\`\`\`\n\n`
+      markdown += `### Class Diagrams\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `classDiagram\n`
+      markdown += `    class ENB_ID_Class {\n`
+      markdown += `        +String property\n`
+      markdown += `        +method() void\n`
+      markdown += `    }\n`
+      markdown += `    \n`
+      markdown += `    %% Add more classes and relationships here\n`
+      markdown += `\`\`\`\n\n`
+      markdown += `### Sequence Diagrams\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `sequenceDiagram\n`
+      markdown += `    participant A as Actor\n`
+      markdown += `    participant S as System\n`
+      markdown += `    \n`
+      markdown += `    A->>S: Request\n`
+      markdown += `    S-->>A: Response\n`
+      markdown += `    \n`
+      markdown += `    %% Add more interactions here\n`
+      markdown += `\`\`\`\n\n`
+      markdown += `### Dataflow Diagrams\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `flowchart TD\n`
+      markdown += `    Input[Input Data] --> Process[Process]\n`
+      markdown += `    Process --> Output[Output Data]\n`
+      markdown += `    \n`
+      markdown += `    %% Add your dataflow diagrams here\n`
+      markdown += `\`\`\`\n\n`
+      markdown += `### State Diagrams\n`
+      markdown += `\`\`\`mermaid\n`
+      markdown += `stateDiagram-v2\n`
+      markdown += `    [*] --> Initial\n`
+      markdown += `    Initial --> Processing\n`
+      markdown += `    Processing --> Complete\n`
+      markdown += `    Complete --> [*]\n`
+      markdown += `    \n`
+      markdown += `    %% Add more states and transitions here\n`
+      markdown += `\`\`\`\n\n`
     }
 
     // Development Plan (preserved from template)

@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, HelpCircle, Bot, Lightbulb } from 'lucide-react'
+import { Settings, HelpCircle, Bot, Lightbulb, Clipboard } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { version } from '../../../package.json'
 import './Header.css'
@@ -57,6 +57,13 @@ export default function Header() {
               title="Discovery - AI Analysis"
             >
               <Lightbulb size={20} />
+            </button>
+            <button
+              className="plan-button"
+              onClick={() => window.open('/SOFTWARE_DEVELOPMENT_PLAN.md', '_blank')}
+              title="Software Development Plan"
+            >
+              <Clipboard size={20} />
             </button>
             <button
               className="help-button"

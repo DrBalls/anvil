@@ -20,6 +20,9 @@ const path = require('path');
 const { marked } = require('marked');
 const agentAPI = require('./api/agent-endpoints');
 
+// File watcher variable for graceful shutdown
+let fileWatcher = null;
+
 // Load version from package.json
 let version;
 try {
@@ -1904,7 +1907,15 @@ async function generateEnablerContentFromTemplate(enabler, capabilityId) {
       console.error('[TEMPLATE] Error during template replacement:', replacementError)
       // Continue with partially replaced template rather than failing completely
     }
-    
+
+    // Remove Development Plan section from enabler template
+    // (Development Plan should only be in SOFTWARE_DEVELOPMENT_PLAN.md)
+    const developmentPlanIndex = templateContent.indexOf('# Development Plan');
+    if (developmentPlanIndex !== -1) {
+      templateContent = templateContent.substring(0, developmentPlanIndex).trim();
+      console.log('[ENABLER-TEMPLATE] Removed Development Plan section from enabler template');
+    }
+
     return templateContent;
     
   } catch (templateErr) {
@@ -2031,43 +2042,6 @@ stateDiagram-v2
 ### External Dependencies
 - [Third-party service]: [Integration details]
 
-## Implementation Plan
-
-### Task 1 - Approval Check
-**Description**: Execute enabler implementation only if each enabler is approved.
-
-**Steps**:
-1. Check Enabler Approval field if it is "Approved"
-- if it is approved, continue on to the next set of steps below
-- if it is not approved, skip all remaining tasks
-2. Continue on to next Task
-
-### Task 2 - Design
-**Description**: Create a design under the Technical Specifications Section
-
-**IMPORTANT**: Do NOT write any implementation code until this task is complete.
-**IMPORTANT**: Do NOT create separate files - update the enabler specification documents.
-
-**Steps**:
-1. Develop a Design documenting it under the Technical Specifications Section
-2. Document any APIs that would appropriate fit in API Technical Specifications
-3. Document any Data Models in the Data Models Section
-4. Document any Sequence Diagrams in the Sequence Diagrams Section
-5. Document any Class Diagrams in the Class Diagrams Section
-6. Document any Data Flow Diagrams in the Data Flow Diagrams Section
-7. Document any State Diagrams in the State Diagrams Section
-8. Document any Dependency Flow Diagrams in the Enabler Dependency Flow Diagrams Section
-9. Document any other designs under Technical Specifications Section
-
-### Task 3 - Implement
-**Description**: Execute requirement implementation only if each requirement is approved.
-
-**Steps**:
-1. For all requirements, check if Requirement Status is "Approved".
-- if it is approved continue to next steps
-- if is is not approved skip and perform no other tasks
-2. Implement the requirement
-
 ## Notes
 [Any additional context, assumptions, or open questions]
 `;
@@ -2140,6 +2114,76 @@ app.get('/README.md', async (req, res) => {
     `);
   } catch (error) {
     res.status(500).send('Error loading documentation');
+  }
+});
+
+// Serve SOFTWARE_DEVELOPMENT_PLAN
+app.get('/SOFTWARE_DEVELOPMENT_PLAN.md', async (req, res) => {
+  try {
+    const planPath = path.join(__dirname, 'SOFTWARE_DEVELOPMENT_PLAN.md');
+    const content = await fs.readFile(planPath, 'utf8');
+    const html = marked(content);
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Anvil - Software Development Plan</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            background: #f5f7fa;
+            color: #2c3e50;
+          }
+          .header {
+            background: linear-gradient(135deg, #4a90e2 0%, #2c5aa0 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+          }
+          .content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+          h1, h2, h3 { color: #4a90e2; }
+          h1 { border-bottom: 3px solid #4a90e2; padding-bottom: 0.5rem; }
+          code { background: #f8f9fa; padding: 0.2rem 0.4rem; border-radius: 4px; }
+          pre { background: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+          table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+          th, td { border: 1px solid #e9ecef; padding: 0.8rem; text-align: left; }
+          th { background: #f8f9fa; }
+          .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          .back-link:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Software Development Plan</h1>
+          <p>Comprehensive guide for discovering, analyzing, designing, implementing, testing, refactoring, and retiring software applications</p>
+        </div>
+        <a href="/" class="back-link">← Back to Anvil</a>
+        <div class="content">
+          ${html}
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    res.status(500).send('Error loading Software Development Plan');
   }
 });
 

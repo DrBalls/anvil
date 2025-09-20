@@ -21,10 +21,10 @@ import Layout from './components/Layout'
 import Dashboard from './components/Dashboard'
 import DocumentView from './components/DocumentView'
 import DocumentEditor from './components/DocumentEditor'
-import TemplateEditor from './components/TemplateEditor'
 import Settings from './components/Settings'
 import AgentDashboard from './components/AgentDashboard'
 import Discovery from './components/Discovery'
+import Plan from './components/Plan'
 
 function App() {
   return (
@@ -35,9 +35,9 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/agents" element={<AgentDashboard />} />
             <Route path="/discovery" element={<Discovery />} />
+            <Route path="/plan" element={<Plan />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/view/:type/*" element={<DocumentView />} />
-            <Route path="/edit/template/*" element={<TemplateEditor />} />
             <Route path="/edit/:type/*" element={<DocumentEditor />} />
             <Route path="/create/:type" element={<DocumentEditor />} />
             <Route path="/create/:type/for/:capabilityId" element={<DocumentEditor />} />

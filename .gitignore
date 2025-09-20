@@ -18,6 +18,14 @@ CLAUDE.md
 *.log
 backup/
 
+# Example project backups
+examples/*/backup/
+**/backup/
+*.backup
+
+# Test projects
+anvil-test-projects/
+
 # IDE files
 .vscode/
 .idea/

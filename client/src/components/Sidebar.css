@@ -105,6 +105,15 @@
   backdrop-filter: blur(2px);
 }
 
+.sidebar-item.associated {
+  background-color: transparent;
+  border: 2px solid rgba(74, 144, 226, 0.8);
+  border-radius: 8px;
+  color: #4a90e2;
+  font-weight: 500;
+  text-shadow: none;
+}
+
 .sidebar-item.indented {
   margin-left: 1.5rem;
   border-left: 2px solid rgba(74, 144, 226, 0.3);
@@ -176,6 +185,24 @@
   background-color: rgba(156, 163, 175, 0.1) !important;
   border-left: 3px solid #9ca3af !important;
   color: #6b7280 !important;
+}
+
+/* Implemented status styling */
+.sidebar-item .implemented-icon {
+  color: #fbbf24 !important;
+  fill: #fbbf24 !important;
+}
+
+.sidebar-item.implemented {
+  position: relative;
+}
+
+.sidebar-item.implemented::after {
+  content: "✨";
+  position: absolute;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
 @media (max-width: 1024px) {

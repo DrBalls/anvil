@@ -6,9 +6,8 @@ const AppContext = createContext()
 const initialState = {
   capabilities: [],
   enablers: [],
-  templates: [],
   selectedCapability: null,
-  selectedDocument: null, // { type: 'capability|enabler|template', path: 'path', id: 'id' }
+  selectedDocument: null, // { type: 'capability|enabler', path: 'path', id: 'id' }
   loading: false,
   error: null,
   config: null,
@@ -28,7 +27,6 @@ function appReducer(state, action) {
         ...state,
         capabilities: action.payload.capabilities || [],
         enablers: action.payload.enablers || [],
-        templates: action.payload.templates || [],
         loading: false,
         error: null
       }

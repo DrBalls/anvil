@@ -19,7 +19,7 @@ export default function RelationshipDiagram() {
         setDiagramData(data)
       } catch (error) {
         console.error('Failed to load diagram data:', error)
-        setDiagramData({ capabilities: [], enablers: [], templates: [] })
+        setDiagramData({ capabilities: [], enablers: [] })
       } finally {
         setDiagramLoading(false)
       }
@@ -70,57 +70,33 @@ graph TB
     %% Dynamic diagram showing actual capabilities and enablers
 `
 
-    // Add capabilities
+    // Add capabilities with CAP IDs shown
     const capabilityNodes = capabilities.map((cap) => {
       const capId = (cap.id || cap.name).replace(/[^a-zA-Z0-9_]/g, '_').replace(/^[^a-zA-Z]/, 'C_') || 'UnknownCap'
       const title = cap.title || cap.name
       const system = cap.system ? `${cap.system}` : ''
       const component = cap.component ? ` | ${cap.component}` : ''
+      // Display only capability name, not ID
       const label = `🎯 ${title}<br/>${system}${component}`
       return {
         id: capId,
         label: label,
         originalId: cap.id,
-        path: cap.path
+        path: cap.path,
+        system: cap.system,
+        component: cap.component
       }
     })
 
-    // Add enablers grouped by capability
-    const enablerNodes = enablers.map((enabler) => {
-      const enId = (enabler.id || enabler.name).replace(/[^a-zA-Z0-9_]/g, '_').replace(/^[^a-zA-Z]/, 'E_') || 'UnknownEnabler'
-      const title = enabler.title || enabler.name
-      const label = `⚙️ ${title}<br/>Status: ${enabler.status || 'Draft'}`
-      return {
-        id: enId,
-        label: label,
-        capabilityId: enabler.capabilityId,
-        originalId: enabler.id,
-        path: enabler.path
-      }
-    })
-
-    // Add all nodes to diagram
+    // Add only capability nodes to diagram (no enablers)
     capabilityNodes.forEach(cap => {
       diagram += `    ${cap.id}["${cap.label}"]\n`
     })
 
-    enablerNodes.forEach(enabler => {
-      diagram += `    ${enabler.id}["${enabler.label}"]\n`
-    })
-
-    // Add capability-to-enabler relationships
-    enablerNodes.forEach(enabler => {
-      if (enabler.capabilityId) {
-        const parentCap = capabilityNodes.find(cap => cap.originalId === enabler.capabilityId)
-        if (parentCap) {
-          diagram += `    ${parentCap.id} --> ${enabler.id}\n`
-        }
-      }
-    })
-
     // Add capability dependency relationships
     capabilities.forEach(capability => {
-      const capId = capability.id || capability.name.replace(/[^a-zA-Z0-9]/g, '')
+      const currentCapNode = capabilityNodes.find(cap => cap.originalId === capability.id)
+      if (!currentCapNode) return
 
       // Add upstream dependencies (dependencies this capability relies on)
       if (capability.upstreamDependencies && capability.upstreamDependencies.length > 0) {
@@ -128,7 +104,7 @@ graph TB
           if (dep.id) {
             const dependencyCap = capabilityNodes.find(cap => cap.originalId === dep.id)
             if (dependencyCap) {
-              diagram += `    ${dependencyCap.id} -.-> ${capId}\n`
+              diagram += `    ${dependencyCap.id} -.->|Upstream Dependency| ${currentCapNode.id}\n`
             }
           }
         })
@@ -140,32 +116,44 @@ graph TB
           if (dep.id) {
             const dependentCap = capabilityNodes.find(cap => cap.originalId === dep.id)
             if (dependentCap) {
-              diagram += `    ${capId} -.-> ${dependentCap.id}\n`
+              diagram += `    ${currentCapNode.id} -.->|Downstream Impact| ${dependentCap.id}\n`
             }
           }
         })
       }
     })
 
-    // Group capabilities by system for better organization
+    // Group capabilities by system and component for better organization
     const systemGroups = {}
+
+    // Group capabilities by system only (simpler boundary structure)
     capabilityNodes.forEach(cap => {
-      const capability = capabilities.find(c => (c.id || c.name.replace(/[^a-zA-Z0-9]/g, '')) === cap.id)
+      const capability = capabilities.find(c => c.id === cap.originalId)
       const system = capability?.system || 'Unassigned'
-      if (!systemGroups[system]) systemGroups[system] = []
-      systemGroups[system].push(cap)
+
+      if (!systemGroups[system]) {
+        systemGroups[system] = {
+          system,
+          capabilities: []
+        }
+      }
+      systemGroups[system].capabilities.push(cap)
     })
 
-    // Add subgraphs for system grouping if there are multiple systems
+    // Add subgraphs for system grouping (cleaner boundaries)
     const systemNames = Object.keys(systemGroups).filter(s => s !== 'Unassigned')
     if (systemNames.length > 1) {
       systemNames.forEach((systemName, index) => {
+        const group = systemGroups[systemName]
+
         diagram += `
     subgraph SYS${index}["🏢 ${systemName} System"]
 `
-        systemGroups[systemName].forEach(cap => {
+        // Add only capabilities to subgraph
+        group.capabilities.forEach(cap => {
           diagram += `        ${cap.id}\n`
         })
+
         diagram += `    end\n`
       })
     }
@@ -179,7 +167,6 @@ graph TB
     classDef system fill:#f0fff4,stroke:#38a169,stroke-width:2px,color:#2f855a,font-weight:bold
 
     ${capabilityNodes.filter(c => c.id && c.id.trim()).length > 0 ? `class ${capabilityNodes.filter(c => c.id && c.id.trim()).map(c => c.id).join(',')} capability` : ''}
-    ${enablerNodes.filter(e => e.id && e.id.trim()).length > 0 ? `class ${enablerNodes.filter(e => e.id && e.id.trim()).map(e => e.id).join(',')} enabler` : ''}
 `
 
     return diagram
@@ -236,9 +223,7 @@ graph TB
           flowchart: {
             useMaxWidth: true,
             htmlLabels: true,
-            curve: 'linear',
-            nodeSpacing: 50,
-            rankSpacing: 80,
+            curve: 'basis',
             diagramPadding: 20
           },
           fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
@@ -311,9 +296,9 @@ graph TB
       <div className="diagram-header">
         <h3>System Architecture</h3>
         <p>
-          {capabilities.length === 0 && enablers.length === 0
-            ? 'Template showing capability and enabler relationships'
-            : `${capabilities.length} capabilities, ${enablers.length} enablers`
+          {capabilities.length === 0
+            ? 'Template showing capability dependencies'
+            : `${capabilities.length} capabilities with dependency relationships`
           }
         </p>
       </div>

@@ -119,7 +119,8 @@
 .help-button,
 .settings-button,
 .agents-button,
-.discovery-button {
+.discovery-button,
+.plan-button {
   background: none;
   border: none;
   color: #4a90e2;
@@ -135,7 +136,8 @@
 .help-button:hover,
 .settings-button:hover,
 .agents-button:hover,
-.discovery-button:hover {
+.discovery-button:hover,
+.plan-button:hover {
   background: rgba(74, 144, 226, 0.1);
   color: #357abd;
   transform: scale(1.1);
@@ -144,7 +146,8 @@
 .help-button:active,
 .settings-button:active,
 .agents-button:active,
-.discovery-button:active {
+.discovery-button:active,
+.plan-button:active {
   transform: scale(0.95);
 }
 

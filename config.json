@@ -7,6 +7,10 @@
       "isActive": true,
       "projectPaths": [
         {
+          "path": ".",
+          "icon": "FileText"
+        },
+        {
           "path": "./examples/hello-world/specifications",
           "icon": "Box"
         }
