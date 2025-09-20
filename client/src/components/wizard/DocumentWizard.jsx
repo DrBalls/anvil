@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronRight, ChevronLeft, Check, HelpCircle, X, Wand2 } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, HelpCircle, X, Wand2, Minus, Maximize2, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { generateCapabilityId, generateEnablerId } from '../../utils/idGenerator'
 import { STATUS_VALUES, APPROVAL_VALUES, PRIORITY_VALUES } from '../../utils/constants'
@@ -112,7 +112,7 @@ const HELP_TEXT = {
 }
 
 export default function DocumentWizard({ onClose, onComplete, initialType = null }) {
-  const { capabilities, enablers, workspaces } = useApp()
+  const { capabilities, enablers, config } = useApp()
   const [currentStep, setCurrentStep] = useState(0)
   const [documentType, setDocumentType] = useState(initialType || 'capability')
   const [formData, setFormData] = useState({
@@ -137,7 +137,7 @@ export default function DocumentWizard({ onClose, onComplete, initialType = null
     nonFunctionalRequirements: []
   })
   const [errors, setErrors] = useState({})
-  const [showHelp, setShowHelp] = useState(true)
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     if (formData.type && !formData.id) {
@@ -152,6 +152,17 @@ export default function DocumentWizard({ onClose, onComplete, initialType = null
       setFormData(prev => ({ ...prev, id: newId }))
     }
   }, [formData.type, capabilities, enablers])
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose()
+      }
+    }
+    
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose])
 
   const steps = formData.type ? STEP_CONFIG[formData.type] : [WIZARD_STEPS.DOCUMENT_TYPE]
   const currentStepKey = steps[currentStep]
@@ -394,29 +405,47 @@ export default function DocumentWizard({ onClose, onComplete, initialType = null
         )
 
       case WIZARD_STEPS.WORKSPACE_PATH:
+        // Handle both workspaces structure and direct projectPaths
+        const activeWorkspace = config?.workspaces?.find(ws => ws.id === config.activeWorkspaceId)
+        const projectPaths = activeWorkspace?.projectPaths || config?.projectPaths || []
+        
+        // Add debug logging to understand structure
+        console.log('Config data:', config)
+        console.log('Active workspace:', activeWorkspace)
+        console.log('Project paths:', projectPaths)
+        
         return (
           <div className="wizard-step-content">
             <div className="form-group">
               <label className="form-label">
                 Save Location <span className="required">*</span>
               </label>
-              <div className="path-selection">
-                {workspaces?.workspaces?.find(ws => ws.id === workspaces.activeWorkspaceId)?.projectPaths?.map((pathObj, index) => {
-                  const path = typeof pathObj === 'string' ? pathObj : pathObj.path
-                  return (
-                    <div
-                      key={index}
-                      className={`path-option ${formData.selectedPath === path ? 'selected' : ''}`}
-                      onClick={() => updateFormData('selectedPath', path)}
-                    >
-                      <div className="path-option-content">
-                        <span className="path-name">{path}</span>
-                        {formData.selectedPath === path && <Check size={16} />}
+              {projectPaths.length > 0 ? (
+                <div className="path-selection">
+                  {projectPaths.map((pathObj, index) => {
+                    const path = typeof pathObj === 'string' ? pathObj : (pathObj?.path || pathObj)
+                    if (!path) return null
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`path-option ${formData.selectedPath === path ? 'selected' : ''}`}
+                        onClick={() => updateFormData('selectedPath', path)}
+                      >
+                        <div className="path-option-content">
+                          <span className="path-name">{path}</span>
+                          {formData.selectedPath === path && <Check size={16} />}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p>No workspace paths available.</p>
+                  <p>Please configure workspace paths in Settings first.</p>
+                </div>
+              )}
               {errors.selectedPath && <span className="error-message">{errors.selectedPath}</span>}
             </div>
           </div>
@@ -604,15 +633,20 @@ export default function DocumentWizard({ onClose, onComplete, initialType = null
     return HELP_TEXT[helpKey] || HELP_TEXT.documentType
   }
 
+
   return (
-    <div className="wizard-overlay">
+    <div className="wizard-overlay" onClick={(e) => {
+      if (e.target === e.currentTarget && onClose) {
+        onClose()
+      }
+    }}>
       <div className="wizard-container">
         <div className="wizard-header">
           <h2>
             <Wand2 size={20} />
             Document Creation Wizard
           </h2>
-          <button className="wizard-close" onClick={onClose}>
+          <button className="wizard-close" onClick={onClose} title="Close (ESC)">
             <X size={20} />
           </button>
         </div>
@@ -644,16 +678,17 @@ export default function DocumentWizard({ onClose, onComplete, initialType = null
             </div>
 
             {showHelp && (
-              <div className="help-panel">
-                <h4>{getHelpContent().title}</h4>
-                <p>{getHelpContent().description}</p>
-                {getHelpContent().tips && (
-                  <ul className="help-tips">
-                    {getHelpContent().tips.map((tip, index) => (
-                      <li key={index}>{tip}</li>
-                    ))}
-                  </ul>
-                )}
+              <div className="help-inline">
+                <div className="help-content">
+                  <p className="help-description">{getHelpContent().description}</p>
+                  {getHelpContent().tips && (
+                    <ul className="help-tips">
+                      {getHelpContent().tips.map((tip, index) => (
+                        <li key={index}>{tip}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             )}
 
