@@ -6,10 +6,11 @@ import { stateListenerManager } from '../../utils/stateListeners'
 import { STATUS_VALUES, APPROVAL_VALUES, PRIORITY_VALUES, REVIEW_VALUES } from '../../utils/constants'
 import { apiService } from '../../services/apiService'
 
-function CapabilityForm({ data, onChange, isNew = false }) {
+function CapabilityForm({ data, onChange, isNew = false, currentPath = null }) {
   const { capabilities, enablers } = useApp()
   const stateListenerRef = useRef(null)
   const [workspaces, setWorkspaces] = useState({ workspaces: [], activeWorkspaceId: null })
+  const [originalPath, setOriginalPath] = useState(null)
 
   // Initialize state listener for capability
   useEffect(() => {
@@ -43,19 +44,26 @@ function CapabilityForm({ data, onChange, isNew = false }) {
               typeof pathObj === 'string' ? pathObj : pathObj.path
             )
 
-            // Check if this is the first capability and only one path exists
-            const isFirstCapability = !capabilities || capabilities.length === 0
-            const hasOnlyOnePath = availablePaths.length === 1
+            // Set original path for existing capabilities
+            if (!isNew && currentPath) {
+              setOriginalPath(currentPath)
+              // Always set the current path as selected for existing capabilities
+              onChange({ selectedPath: currentPath })
+            } else if (isNew) {
+              // Check if this is the first capability and only one path exists
+              const isFirstCapability = !capabilities || capabilities.length === 0
+              const hasOnlyOnePath = availablePaths.length === 1
 
-            if (isFirstCapability && hasOnlyOnePath && !data.selectedPath) {
-              // Auto-select the only available path
-              onChange({ selectedPath: availablePaths[0] })
-            } else {
-              // Try to use the last selected path from config
-              const lastSelectedPath = data.lastSelectedCapabilityPath
-              if (lastSelectedPath && availablePaths.includes(lastSelectedPath) && !data.selectedPath) {
-                console.log(`[PATH-PREFERENCE] Using last selected path: ${lastSelectedPath}`)
-                onChange({ selectedPath: lastSelectedPath })
+              if (isFirstCapability && hasOnlyOnePath && !data.selectedPath) {
+                // Auto-select the only available path
+                onChange({ selectedPath: availablePaths[0] })
+              } else {
+                // Try to use the last selected path from config
+                const lastSelectedPath = data.lastSelectedCapabilityPath
+                if (lastSelectedPath && availablePaths.includes(lastSelectedPath) && !data.selectedPath) {
+                  console.log(`[PATH-PREFERENCE] Using last selected path: ${lastSelectedPath}`)
+                  onChange({ selectedPath: lastSelectedPath })
+                }
               }
             }
           }
@@ -67,7 +75,7 @@ function CapabilityForm({ data, onChange, isNew = false }) {
 
     // Load workspaces for both new and existing capabilities
     loadWorkspaces()
-  }, [isNew, capabilities, data.lastSelectedCapabilityPath, onChange])
+  }, [isNew, capabilities, data.lastSelectedCapabilityPath, onChange, currentPath])
 
   const handleBasicChange = useCallback(async (field, value) => {
     onChange({ [field]: value })
@@ -158,7 +166,13 @@ function CapabilityForm({ data, onChange, isNew = false }) {
   }), [])
   
   // Memoize status, approval, priority, and review options
-  const statusOptions = useMemo(() => Object.values(STATUS_VALUES.CAPABILITY), [])
+  const statusOptions = useMemo(() => [
+    STATUS_VALUES.CAPABILITY.IN_DRAFT,
+    STATUS_VALUES.CAPABILITY.READY_FOR_ANALYSIS,
+    STATUS_VALUES.CAPABILITY.READY_FOR_DESIGN,
+    STATUS_VALUES.CAPABILITY.READY_FOR_IMPLEMENTATION,
+    STATUS_VALUES.CAPABILITY.IMPLEMENTED
+  ], [])
   const approvalOptions = useMemo(() => Object.values(APPROVAL_VALUES), [])
   const priorityOptions = useMemo(() => Object.values(PRIORITY_VALUES.CAPABILITY_ENABLER), [])
   const reviewOptions = useMemo(() => Object.values(REVIEW_VALUES), [])
@@ -223,7 +237,7 @@ function CapabilityForm({ data, onChange, isNew = false }) {
           {workspaces.workspaces.length > 0 && (
             <div className="form-group">
               <label className="form-label">
-                {isNew ? 'Save to Path *' : 'Move to Path'}
+                Specification Path {isNew ? '*' : ''}
               </label>
               <select
                 className="form-select"
@@ -232,7 +246,7 @@ function CapabilityForm({ data, onChange, isNew = false }) {
                 required={isNew}
               >
                 <option value="">
-                  {isNew ? 'Select where to save this capability...' : 'Keep current location or select new path...'}
+                  {isNew ? 'Select where to save this capability...' : originalPath || 'Select path...'}
                 </option>
                 {workspaces.workspaces
                   .find(ws => ws.id === workspaces.activeWorkspaceId)
@@ -247,7 +261,7 @@ function CapabilityForm({ data, onChange, isNew = false }) {
                     );
                   })}
               </select>
-              {!isNew && (
+              {!isNew && originalPath && data.selectedPath && data.selectedPath !== originalPath && data.selectedPath !== '' && (
                 <small className="form-helper-text">
                   ⚠️ Changing this will move the capability and all its enablers to the new path
                 </small>

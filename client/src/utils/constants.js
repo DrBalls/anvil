@@ -4,8 +4,11 @@ export const STATUS_VALUES = {
   CAPABILITY: {
     IN_DRAFT: 'In Draft',
     READY_FOR_ANALYSIS: 'Ready for Analysis',
+    IN_ANALYSIS: 'In Analysis',
     READY_FOR_DESIGN: 'Ready for Design',
+    IN_DESIGN: 'In Design',
     READY_FOR_IMPLEMENTATION: 'Ready for Implementation',
+    IN_IMPLEMENTATION: 'In Implementation',
     IMPLEMENTED: 'Implemented'
   },
   ENABLER: {

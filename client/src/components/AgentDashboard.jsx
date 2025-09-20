@@ -318,6 +318,14 @@ const AgentDashboard = () => {
         </button>
       </div>
 
+      <div className="agent-notice">
+        <AlertCircle size={20} />
+        <p className="agent-notice-text">
+          <strong>Feature Not Yet Implemented:</strong> The Agent Control Center is currently under development.
+          AI agent management and workflow automation will be available in a future release.
+        </p>
+      </div>
+
       <div className="dashboard-tabs">
         <button
           className={`tab ${activeTab === 'agents' ? 'active' : ''}`}

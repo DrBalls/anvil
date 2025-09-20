@@ -108,7 +108,7 @@ export default function DocumentView() {
         if (parentElement) {
           // Create the file path element
           const filePathElement = doc.createElement('li')
-          filePathElement.innerHTML = `<strong>File Path:</strong> ${displayPath}`
+          filePathElement.innerHTML = `<strong>Specification Path:</strong> ${displayPath}`
 
           // Insert after the parent element
           if (parentElement.nextSibling) {

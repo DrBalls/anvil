@@ -20,22 +20,23 @@
  * Converts a document ID to a filename (preferred method for uniqueness)
  * @param {string} id - The document ID (e.g., CAP-001, ENB-001)
  * @param {string} type - The document type (capability, enabler)
- * @returns {string} - The filename with appropriate suffix (e.g., cap-001-capability.md, enb-001-enabler.md)
+ * @returns {string} - The filename with appropriate suffix (e.g., 001-capability.md, 001-enabler.md)
  */
 export function idToFilename(id, type) {
   if (!id) return '';
 
-  const lowerId = id.toLowerCase();
+  // Remove prefix from ID (CAP- or ENB-) to get just the number
+  const numericId = id.replace(/^(CAP|ENB)-/i, '');
 
-  // Add type suffix for consistency with backend naming
+  // Add type suffix for clarity
   if (type === 'capability') {
-    return `${lowerId}-capability.md`;
+    return `${numericId}-capability.md`;
   } else if (type === 'enabler') {
-    return `${lowerId}-enabler.md`;
+    return `${numericId}-enabler.md`;
   }
 
   // Fallback for unknown types
-  return `${lowerId}.md`;
+  return `${numericId}.md`;
 }
 
 /**

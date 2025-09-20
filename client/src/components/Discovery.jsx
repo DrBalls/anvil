@@ -34,13 +34,33 @@ export default function Discovery() {
     if (!results) return
 
     try {
-      // Create capabilities and enablers based on analysis results
+      const createdCapabilities = []
+
+      // Create capabilities first to establish context
       for (const capability of results.capabilities || []) {
-        await apiService.createFromDiscovery('capability', capability)
+        const result = await apiService.createFromDiscovery('capability', capability)
+        createdCapabilities.push({
+          id: capability.id,
+          path: result.fileName ? `specifications/${result.fileName}` : null
+        })
       }
 
+      // Create enablers with capability context
       for (const enabler of results.enablers || []) {
-        await apiService.createFromDiscovery('enabler', enabler)
+        let context = {}
+
+        // Try to find matching capability for this enabler
+        if (enabler.capabilityId) {
+          const matchingCap = createdCapabilities.find(cap => cap.id === enabler.capabilityId)
+          if (matchingCap && matchingCap.path) {
+            context.parentCapabilityPath = matchingCap.path
+          }
+        } else if (createdCapabilities.length === 1) {
+          // If only one capability was created, associate enabler with it
+          context.parentCapabilityPath = createdCapabilities[0].path
+        }
+
+        await apiService.createFromDiscovery('enabler', enabler, context)
       }
 
       toast.success(`Created ${results.capabilities?.length || 0} capabilities and ${results.enablers?.length || 0} enablers`)
