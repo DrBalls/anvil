@@ -671,6 +671,23 @@ The system includes automated state management:
 
 ## Version History
 
+### v1.1.3 - Mermaid Diagram Fix ✅
+- **RELATIONSHIP DIAGRAM FIX**: Fixed Mermaid parsing error that caused "Parse error on line 15" when rendering component relationship diagrams
+- **ROBUST ID GENERATION**: Improved node ID generation to ensure valid Mermaid identifiers by replacing special characters with underscores
+- **CLASS ASSIGNMENT SAFETY**: Added filtering and validation to prevent empty or invalid class assignments in Mermaid diagrams
+- **ERROR PREVENTION**: Enhanced defensive programming for edge cases in diagram rendering
+
+### v1.1.2 - Discovery UI Updates ✅
+- **DISCOVERY ICON**: Changed Discovery icon from search to lightbulb with consistent blue styling
+- **FEATURE STATUS**: Added "Feature Not Yet Implemented" notice banner to Discovery page
+- **UI CONSISTENCY**: Ensured Discovery button matches other header buttons with same hover effects and styling
+
+### v1.1.1 - Discovery Feature and Smart Rebuild ✅
+- **DISCOVERY FEATURE**: Added Discovery page with markdown-capable text editor and AI analysis engine
+- **SMART REBUILD DETECTION**: Enhanced startup scripts to detect client changes and automatically rebuild when needed
+- **AI PATTERN MATCHING**: Implemented intelligent text parsing to extract capabilities and enablers from project descriptions
+- **AUTOMATIC DOCUMENT GENERATION**: Created template-based document generation with proper Anvil formatting
+
 ### v1.0.2 - Defect Fixes and Version Management ✅
 - **DUPLICATE ENABLER FIX**: Fixed duplicate enabler file creation issue where inconsistent filename generation between frontend and backend created files with and without `-enabler` suffix
 - **CENTRALIZED VERSION MANAGEMENT**: Updated all code to use package.json as single source of truth for version information

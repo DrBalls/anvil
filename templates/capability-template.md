@@ -167,8 +167,6 @@ flowchart TD
 | 3 | Generate new Enablers, add Enablers to Capability List and Create the actual Enabler files, ensure you include the Technical Specifications section from the Enabler Template| Analyze the Capability and create new Enablers |
 | 4 | Configure Enablers | Apply Enabler Configuration Rules below |
 
-
-
 ### Enabler Configuration Rules
 | Enabler Analysis Review Setting | Enabler Approval | Enabler Status | Enabler Priority |
 |------------------------|---------------------|-------------------|-------------------|
@@ -178,7 +176,7 @@ flowchart TD
 ### Post-Condition Transition
 | Step | Action |
 |------|--------|
-| 1 | Set Enabler Status "Ready for Design"
+| 1 | Set Capability Status "Ready for Design"
 
 ### Exit Criteria Checklist
 - [ ] All new Enablers added to Capability
@@ -267,35 +265,38 @@ marked as placeholders with grey styling.
 
 ---
 
-## Task 4: Develop the Enablers (by Following the Enablers Development Plan)
-**Purpose**: Develop the Enabler the by following the Enablers Development Plan very closely
+ ## Task 4: Develop the Enablers (by Following the Enablers Development Plan)
+  **Purpose**: Develop the Enabler the by following the Enablers Development Plan very closely
 
-### Pre-Conditions Verification (ABSOLUTELY MANDATORY)
-| Condition | Required Value | Action if True | Action if False |
-|-----------|----------------|---------|----------------------|
-| Capability Approval | "Approved" | continue to next pre-condition check | IMMEDIATE STOP |
-| Capability Status | "Ready for Implementation" | continue to next section | SKIP to Task 5: Refactor |
+  ### Pre-Conditions Verification (ABSOLUTELY MANDATORY)
+  | Condition | Required Value | Action if True | Action if False |
+  |-----------|----------------|---------|----------------------|
+  | Capability Approval | "Approved" | continue to next pre-condition check | IMMEDIATE STOP |
+  | Capability Status | "Ready for Implementation" | continue to next section | IMMEDIATE STOP |
 
-#### Critical Rules
-- **ABSOLUTE PROHIBITION**: Never ask user to change Pre-Conditions values
-- **IMMEDIATE TERMINATION**: Stop ALL processing if pre-conditions fail
-- **NO EXCEPTIONS**: Pre-condition failures = MANDATORY STOP
-- **WORKFLOW HALT**: Do not proceed past failed pre-condition verification
-- **RESPONSE REQUIREMENT**: Must explicitly state "STOPPING due to failed pre-conditions" and explain which conditions failed
+  #### Critical Rules
+  - **ABSOLUTE PROHIBITION**: Never ask user to change Pre-Conditions values
+  - **ABSOLUTE PROHIBITION**: Never modify enabler approval status, analysis review settings, or any other pre-condition values
+  - **IMMEDIATE TERMINATION**: Stop ALL processing if pre-conditions fail
+  - **NO EXCEPTIONS**: Pre-condition failures = MANDATORY STOP
+  - **WORKFLOW HALT**: Do not proceed past failed pre-condition verification
+  - **RESPONSE REQUIREMENT**: Must explicitly state "STOPPING due to failed pre-conditions" and explain which conditions failed
 
-### Develop Enabler
-|Step | Condition | Required Value | Action if True | Action if False |
-|------|---------------------|----------------|---------|----------------------|
-| 1 | Enabler Approval | "Approved" | Develop  Enabler following the Enabler's Development Plan | IMMEDIATE STOP |
+  ### Develop Enabler
+  |Step | Condition | Required Value | Action if True | Action if False |
+  |------|---------------------|----------------|---------|----------------------|
+  | 1 | Enabler Approval | "Approved" | Develop Enabler following the Enabler's Development Plan | IMMEDIATE STOP - explain that enabler is not approved and cannot be
+  developed |
 
-### Post-Condition Transition
-| Step | Action |
-|------|--------|
-| 1 | Set Enabler Status "Implemented"
+  ### Post-Condition Transition
+  | Step | Action |
+  |------|--------|
+  | 1 | Set Enabler Status "Implemented" |
 
-### Exit Criteria Checklist
-- [ ] Implementation completed for all approved requirements
-- [ ] Requirement Status updated appropriately
-- [ ] Unapproved requirements skipped
-- [ ] Enabler State set to "Implemented"
+  ### Exit Criteria Checklist
+  - [ ] Implementation completed for all approved requirements
+  - [ ] Requirement Status updated appropriately
+  - [ ] Unapproved requirements skipped
+  - [ ] Enabler State set to "Implemented"
 
+  **CRITICAL REMINDER**: Only enablers with Approval = "Approved" can be developed. Never modify approval status to make this condition true.

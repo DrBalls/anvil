@@ -444,6 +444,7 @@ export default function DocumentEditor() {
                 data={formData}
                 onChange={handleFormDataChange}
                 isNew={isNew}
+                currentPath={path ? path.substring(0, path.lastIndexOf('/')) : null}
               />
             )}
             {type === 'enabler' && (
